@@ -48,14 +48,14 @@ def simulate(PV, PMT, peryear, t, r, sd, N):
 		print("{0:.2f}% of results are negative".format(pct_low))
 		print("Decreasing PMT to", PMT+100)
 		return simulate(PV, PMT+100, peryear, t, r, sd, N, cumulative=cumulative)
-	print("100% chance of ending with more than", percentiles[0])
-	print("99% chance of ending with more than", percentiles[1])
-	print("95% chance of ending with more than", percentiles[5])
-	print("90% chance of ending with more than", percentiles[10])
-	print("50% chance of ending with more than", percentiles[50])
-	print("25% chance of ending with more than", percentiles[75])
-	print("10% chance of ending with more than", percentiles[90])
-	print("1% chance of ending with more than", percentiles[99])
+	print("100% chance of ending with more than", int(percentiles[0]))
+	print("99% chance of ending with more than", int(percentiles[1]))
+	print("95% chance of ending with more than", int(percentiles[5]))
+	print("90% chance of ending with more than", int(percentiles[10]))
+	print("50% chance of ending with more than", int(percentiles[50]))
+	print("25% chance of ending with more than", int(percentiles[75]))
+	print("10% chance of ending with more than", int(percentiles[90]))
+	print("1% chance of ending with more than", int(percentiles[99]))
 
 	fig, (ax1, ax2) = plt.subplots(2,1,figsize=(16,9))
 
@@ -69,7 +69,7 @@ def simulate(PV, PMT, peryear, t, r, sd, N):
 	plt_bins = [b[0][0] for b in trimbins] + [trimbins[-1][0][1]]
 	ax1.hist(res_arr, plt_bins)
 
-	ax2.hist(res_arr, plt_bins, cumulative=True, normalized=True)
+	ax2.hist(res_arr, cumulative=True, density=True)
 
 	plt.draw()
 	return trimbins
