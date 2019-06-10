@@ -1,4 +1,4 @@
-from pandas_datareader import data
+from pandas_datareader import data as pdata
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -24,7 +24,7 @@ def plot_stocks(tickers, num_years_back=1, num_months_back=0):
 	end_date = '{}-{}-{}'.format(now.year, now.month, now.day)
 
 	# User pandas_datareader.data.DataReader to load the desired data.
-	panel_data = data.DataReader(tickers, 'yahoo', start_date, end_date)
+	panel_data = pdata.DataReader(tickers, 'yahoo', start_date, end_date)
 	close = panel_data['Close']
 
 
@@ -44,13 +44,14 @@ def plot_stocks(tickers, num_years_back=1, num_months_back=0):
 	ax.set_xlabel('Date')
 	ax.set_ylabel('Percent change from start date (%)')
 	ax.legend()	
+	plt.grid(axis='y')
 	plt.show()
 
 
 
 if __name__ == '__main__':
 	tickers = ['XUU.TO', 'XEF.TO', 'XEC.TO', 'HXT.TO']
-	num_years_back = 4
+	num_years_back = 1
 	num_months_back = 0
 	plot_stocks(tickers, num_years_back, num_months_back)
 
