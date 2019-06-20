@@ -1,19 +1,27 @@
+# pytorch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import TensorDataset
+from torch.utils.data import DataLoader
+# fetching data
 from pathlib import Path
 import requests
 import pickle
 import gzip
+# plotting/computation/misc
 import matplotlib.pyplot as plt
 import numpy as np
-from torch.utils.data import TensorDataset
-from torch.utils.data import DataLoader
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
-bs = 64  # batch size
-lr = 0.1  # learning rate
-epochs = 2  # how many times to run through
+bs = 32  # batch size
+lr = 0.05  # learning rate
+epochs = 5  # how many times to run through
+
+# use CUDA (GPU) if available
+dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 # --- fetch the MNIST dataset ----------------------------------
 DATA_PATH = Path("data")
@@ -46,14 +54,6 @@ loss_func = F.cross_entropy
 
 
 # --- define some functions-------------------------------------
-# accuracy: comparing our output/prediction (out) to the labels (yb)
-def accuracy(out, yb):
-    # look at largest element of each row of our predictions (our guess)
-    preds = torch.argmax(out, dim=1)
-    # see how many (porportion) of our guesses match the label
-    return (preds == yb).float().mean()
-
-
 # set up dataloaders for batches (iterator that returns batches)
 def get_data(train_ds, valid_ds, bs):
     return (
@@ -88,10 +88,7 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
 
 
 # --- Sequential stuff -----------------------------------------
-# use CUDA (GPU) if available
-dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-# reshape 2D single-channel image
+# reshape x to 2D single-channel 28x28 image, and also return label y
 def preprocess(x, y):
     return x.view(-1, 1, 28, 28).to(dev), y.to(dev)
 
@@ -129,9 +126,11 @@ define the size of the output tensor we want, rather than the input
 tensor we have. As a result, our model will work with any size input.
 '''
 model = nn.Sequential(
-    nn.Conv2d(1, 16, kernel_size=3, stride=2, padding=1),
+    nn.Conv2d(1, 12, kernel_size=3, stride=2, padding=1),
     nn.ReLU(),
-    nn.Conv2d(16, 16, kernel_size=3, stride=2, padding=1),
+    nn.Conv2d(12, 14, kernel_size=3, stride=2, padding=1),
+    nn.ReLU(),
+    nn.Conv2d(14, 16, kernel_size=3, stride=2, padding=1),
     nn.ReLU(),
     nn.Conv2d(16, 10, kernel_size=3, stride=2, padding=1),
     nn.ReLU(),
@@ -144,5 +143,36 @@ opt = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
 fit(epochs, model, loss_func, opt, train_dl, valid_dl)
 
 # --------------------------------------------------------------
+# Testing the model
+'''
+ apply model to a dataset, ds, to obtain the predicted result on the
+ first N data points. We use argmax since the index of the highest
+ entry is the actual digit that is being predicted.
+
+'''
+def pred_compare(model, ds, N=None):
+    N = N if N is not None else len(ds)
+    preds = torch.argmax(model(preprocess(*ds[0:N])[0]), dim=1)
+    y = ds[:N][-1]
+    return preds, y
 
 
+# accuracy: comparing our output/prediction (out) to the labels (y)
+def accuracy(model, ds):
+    preds, y = pred_compare(model, ds)
+    wrong_ind = np.where(preds != y)  # indexes where pred is wrong
+    return (preds == y).float().mean(), wrong_ind[0]
+
+acc, wrong_ind = accuracy(model, valid_ds)
+preds, y = pred_compare(model, valid_ds)
+print("accuracy:", "{:0.2f}%".format(float(acc)*100))
+
+num_img = min(8, len(wrong_ind))
+fig, axes = plt.subplots(2,4)
+axes = axes.flatten()
+for i in range(num_img):
+    if i+1 > num_img:
+        break
+    axes[i].imshow(valid_ds[wrong_ind[i]][0].view((28, 28)), cmap="gray")
+    print(i, "Predicted: {}, Actual: {}".format(preds[wrong_ind[i]], y[wrong_ind[i]]))
+plt.show()
