@@ -46,19 +46,20 @@ def simulate(PV, PMT, peryear, t, r, sd, N):
 		print("*** Warning **********************")
 		pct_low = len([i for i in res_arr if i < 0])/len(res_arr)*100
 		print("{0:.2f}% of results are negative".format(pct_low))
-		print("Decreasing PMT to", PMT+100)
-		return simulate(PV, PMT+100, peryear, t, r, sd, N)
+		print("PMT changed to", PMT+100)
+		PMT += 100
+		return simulate(PV, PMT, peryear, t, r, sd, N)
 	for p in [0,1,5,10,50,75,90]:
 		print("{}% chance of ending with more than".format(100-p), int(percentiles[p]))
 	print("---"*10)
-	print("Probabilty of getting more than ${:,.0f}: {:,.0f}%".format(PV, 100-percentileofscore(res_arr, PV)))
-	print("Probabilty of getting more than ${:,.0f}: {:,.0f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
+	print("Probability of getting more than ${:,.0f}: {:,.0f}%".format(PV, 100-percentileofscore(res_arr, PV)))
+	print("Probability of getting more than ${:,.0f}: {:,.0f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
 
 
 	# set up graph window
 	fig, (ax1, ax2) = plt.subplots(2,1,figsize=(16,9))
 
-	#graph 1
+	#graph 1 --------------------------------------------------------
 	ax1.title.set_text("Starting with ${:,.0f} over {} years with payments of {:,.0f}".format(PV, t, PMT))
 	ax1.text(percentiles[50]-0.05*percentiles[50], 3, "50%:\n{:,}".format(int(percentiles[50])))
 	ax1.axvline(x=percentiles[50], color='k')  # plot median line
@@ -67,33 +68,42 @@ def simulate(PV, PMT, peryear, t, r, sd, N):
 
 	trimbins = trim_bins(bins)
 	plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])
-	ax1.hist(res_arr, plt_bins)
+	counts1, bins1, patches1 = ax1.hist(res_arr, plt_bins)
+
+	# colour the bars
+	num_bins = len(plt_bins)
+	num_patches = len(patches1)
+	for patch, i in zip(patches1, range(1, num_patches+1)):
+		sig = 0.9/(1+np.exp(-(i-num_bins)))
+		patch.set_facecolor( (0.3, 0.8*(i/num_patches), 0.8*(i/num_patches)) ) # (r,g,b)
+
 	ax1.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
-	# graph 2
+
+	# graph 2 -------------------------------------------------------
 	num_bins = 25
 	step = (plt_bins[-1]-plt_bins[0])/num_bins
 
-	counts, bins, patches = ax2.hist(res_arr, \
+	counts2, bins2, patches2 = ax2.hist(res_arr, \
 		bins=num_bins, cumulative=-1, density=True)
 
 	ax2.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-	print(((percentiles[65]-percentiles[35])//50000)*50000)
 	plt.xticks(np.arange((min(res_arr)//100000)*100000, (max(res_arr)//100000)*100000, percentiles[98]//500000*50000))
 
 	plt.yticks([i for i in np.arange(0,1.1,0.1)])
 	plt.grid(axis='y')
 
 	# colour the bars
-	num_patches = len(patches)
-	for patch, i in zip(patches, range(1, num_patches+1)):
+	num_patches = len(patches2)
+	for patch, i in zip(patches2, range(1, num_patches+1)):
 		sig = 0.9/(1+np.exp(-(i-num_bins)))
-		patch.set_facecolor( (0.7, 1-0.9*(i/num_patches), 1-0.9*(i/num_patches)) ) # (r,g,b)
+		patch.set_facecolor( (0.3, 0.8*(i/num_patches), 0.8*(i/num_patches)) ) # (r,g,b)
 
 	# Label the percentages
-	for i, x in zip(range(num_bins), bins[:-1]):
-	    percent = '{:.0f}%'.format(counts[i]*100)
-	    ax2.annotate(percent, xy=(x, 0), xytext=(x,counts[i]))
+	for i, x in zip(range(num_bins), bins2[:-1]):
+	    percent = '{:.0f}%'.format(counts2[i]*100)
+	    # xytext: set location of text to display
+	    ax2.annotate(percent, xy=(x, 0), xytext=(x+bins2[0]*0.01,counts2[i]))
 
 	plt.draw()
 	return trimbins
@@ -122,15 +132,25 @@ def trim_bins(oldbins):
 if __name__ == "__main__":
 	pp = pprint.PrettyPrinter(indent=4)
 
-	### Growing stage ### 
-	PV = 30000
-	PMT = 3000
+	### Scenario 1 ### 
+	PV = 25000
+	PMT = 1200
 	peryear = 12
-	years = 15
+	years = 22
 	ROR = 7
 	sd = 11.4
-	N = 5000
+	N = 4000
 	bins = simulate(PV, PMT, peryear, years, ROR, sd, N)
+
+	# ### Scenario 2 ### 
+	# PV = 0
+	# PMT = 600
+	# peryear = 12
+	# years = 30
+	# ROR = 7
+	# sd = 11.4
+	# N = 5000
+	# bins = simulate(PV, PMT, peryear, years, ROR, sd, N)
 
 
 	### Withdraw stage ### with beeb
