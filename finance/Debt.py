@@ -56,16 +56,15 @@ print("\n")
 
 #----------------------------------------------------------------------------------------------------
 
-lump = -PV_rrsp1*0.6  # RRSP withdrawal taxed at 40%
+lump2 = -PV_rrsp1*0.6  # RRSP withdrawal taxed at 40%
 
-PV2 = PV1-lump
+PV2 = PV1-lump2
 t2 = 2.8
 pmt2, loss2 = pmt_interest(PV2, r, t2)
-tot2 = PV2 + loss2 + lump
+tot2 = PV2 + loss2 + lump2
 
-PV_rrsp2 = 0
+PV_rrsp2 = PV_rrsp1 + lump2/0.6
 t_rrsp2 = (65-52)-t2
-r_rrsp = 6
 FV_rrsp2 = FV(0, PV_rrsp2, r_rrsp, t2)  # growth of initial RRSP amount during debt repayment
 FV_rrsp_tot2 = FV(-pmt2, FV_rrsp2, r_rrsp, t_rrsp2)
 
@@ -73,7 +72,7 @@ grand_total2 = 0.8*(FV_locked + FV_rrsp_tot2)  # tax-reduced total of RRSPs
 
 print("---"*20)
 print("Option 2: Use current RRSP money to pay down debt, followed by {} {} repayment".format(t2, "year" if t2==1 else "years"))
-print("Initial lump sum of ${:0,.2f} reduces debt owed to ${:0,.2f}".format(-lump, -PV2))
+print("Initial lump sum of ${:0,.2f} reduces debt owed to ${:0,.2f}".format(-lump2, -PV2))
 print("Repay debt of ${:0,.2f} with interest of {}% over {} {}".format(-PV2, r, t2, "year" if t2==1 else "years" ))
 print("---"*20)
 print("Payments of ${:0,.2f}".format(-pmt2))
@@ -84,3 +83,33 @@ print("Initial RRSP amount of ${:0,.2f}".format(PV_rrsp2))
 print("If you begin investing after {} years with monthly payments of ${:0,.2f}, at 65 you would have ${:0,.2f}".format(t2, -pmt2, FV_rrsp_tot2))
 print("At 65, your Locked-in RRSP, which started with ${:,}, grows to ${:0,.2f}".format(PV_locked, FV_locked))
 print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a total RRSP value of ${:0,.2f}".format(grand_total2))
+
+#----------------------------------------------------------------------------------------------------
+
+# lump3 = -PV_rrsp1/2*0.6  # RRSP withdrawal taxed at 40%
+
+# PV3 = PV1-lump3
+# t3 = 2.8
+# pmt3, loss3 = pmt_interest(PV3, r, t3)
+# tot3 = PV3 + loss3 + lump3
+
+# PV_rrsp3 = PV_rrsp1 + lump3/0.6
+# t_rrsp3 = (65-52)-t3
+# FV_rrsp3 = FV(0, PV_rrsp2, r_rrsp, t2)  # growth of initial RRSP amount during debt repayment
+# FV_rrsp_tot2 = FV(-pmt2, FV_rrsp2, r_rrsp, t_rrsp2)
+
+# grand_total2 = 0.8*(FV_locked + FV_rrsp_tot2)  # tax-reduced total of RRSPs
+
+# print("---"*20)
+# print("Option 2: Use current RRSP money to pay down debt, followed by {} {} repayment".format(t2, "year" if t2==1 else "years"))
+# print("Initial lump sum of ${:0,.2f} reduces debt owed to ${:0,.2f}".format(-lump3, -PV2))
+# print("Repay debt of ${:0,.2f} with interest of {}% over {} {}".format(-PV2, r, t2, "year" if t2==1 else "years" ))
+# print("---"*20)
+# print("Payments of ${:0,.2f}".format(-pmt2))
+# print("Total amount paid toward debt: ${:0,.2f}".format(-tot2))
+# print("Total interest paid: ${:0,.2f}".format(-loss2))
+# print("---Investment growth---")
+# print("Initial RRSP amount of ${:0,.2f}".format(PV_rrsp2))
+# print("If you begin investing after {} years with monthly payments of ${:0,.2f}, at 65 you would have ${:0,.2f}".format(t2, -pmt2, FV_rrsp_tot2))
+# print("At 65, your Locked-in RRSP, which started with ${:,}, grows to ${:0,.2f}".format(PV_locked, FV_locked))
+# print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a total RRSP value of ${:0,.2f}".format(grand_total2))
