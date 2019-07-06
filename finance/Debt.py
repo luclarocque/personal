@@ -1,11 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import pprint
-
 # PV: present value of debt
 # t_years: number of years to pay off debt
 # peryear: number of payments for year
-
+# r: annual rate of return percentage (e.g, r=7 for 7%)
 def pmt_interest(PV, r, t_years, peryear=12):
 	n = t_years*peryear
 	r = (r/100.)/peryear
@@ -20,7 +16,7 @@ def FV(PMT, PV, r, t_years, peryear=12):
 	return fv
 
 #----------------------------------------------------------------------------------------------------
-r_rrsp = 6
+r_rrsp = 5
 PV_locked = 100000
 FV_locked = FV(0, PV_locked, r_rrsp, 65-52)
 #----------------------------------------------------------------------------------------------------
@@ -51,7 +47,6 @@ print("Initial RRSP amount of ${:,}".format(PV_rrsp1))
 print("If you begin investing after {} years with monthly payments of ${:0,.2f}, at 65 you would have ${:0,.2f}".format(t1, -pmt1, FV_rrsp_tot1))
 print("At 65, your Locked-in RRSP, which started with ${:,}, grows to ${:0,.2f}".format(PV_locked, FV_locked))
 print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a total RRSP value of ${:0,.2f}".format(grand_total1))
-print("Locked-in RRSP ")
 print("\n")
 
 #----------------------------------------------------------------------------------------------------
@@ -82,7 +77,7 @@ print("---Investment growth---")
 print("Initial RRSP amount of ${:0,.2f}".format(PV_rrsp2))
 print("If you begin investing after {} years with monthly payments of ${:0,.2f}, at 65 you would have ${:0,.2f}".format(t2, -pmt2, FV_rrsp_tot2))
 print("At 65, your Locked-in RRSP, which started with ${:,}, grows to ${:0,.2f}".format(PV_locked, FV_locked))
-print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a total RRSP value of ${:0,.2f}".format(grand_total2))
+print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a net RRSP value of ${:0,.2f}".format(grand_total2))
 
 #----------------------------------------------------------------------------------------------------
 
@@ -112,4 +107,8 @@ print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a to
 # print("Initial RRSP amount of ${:0,.2f}".format(PV_rrsp2))
 # print("If you begin investing after {} years with monthly payments of ${:0,.2f}, at 65 you would have ${:0,.2f}".format(t2, -pmt2, FV_rrsp_tot2))
 # print("At 65, your Locked-in RRSP, which started with ${:,}, grows to ${:0,.2f}".format(PV_locked, FV_locked))
-# print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a total RRSP value of ${:0,.2f}".format(grand_total2))
+# print("In retirement, the RRSP withdrawals are taxed at about 20%, yielding a net RRSP value of ${:0,.2f}".format(grand_total2))
+
+
+
+# TODO: what if pmts of 800 per month with 0 starting debt?
