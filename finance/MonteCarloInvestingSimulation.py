@@ -2,9 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.gridspec as gridspec
 from scipy.stats import percentileofscore
 import pprint
-from finlib import median_elem, create_rand_array, recession_adjustment
+from finlib import median_elem, create_rand_array, recession_adjustment, ror_with_pmts
 
 def trim_bins(oldbins):
     '''
@@ -41,10 +42,11 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     peryear: number of times deposits/withdrawals are made per year
     '''
     pp = pprint.PrettyPrinter(indent=4)
+    n = t*peryear
 
+    inc = 50000  # increment (step size) and bin width
     lb = int(-1e6)  # lower bound of bins
     ub = int(1e8)  # upper bound of bins
-    inc = 50000  # increment (step size) and bin width
     bins = [[(k,k+inc-1),0] for k in range(lb,ub,inc)]
 
     # create random array: each row is a full simulation, with data for all years specified
@@ -75,40 +77,44 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     for p in [0,1,5,10,50,75,90]:
         print("{}% chance of ending with more than ${:,.0f}".format(100-p, int(percentiles[p])))
     print("---"*10)
-    print("Probability of getting more than ${:,.0f}: {:,.0f}%".format(PV, 100-percentileofscore(res_arr, PV)))
-    print("Probability of getting more than ${:,.0f}: {:,.0f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
+    break_even = PV+PMT*n
+    print("Probability of breaking even with more than ${:,.0f}: {:,.1f}%".format(break_even, 100-percentileofscore(res_arr, break_even)))
+    print("Probability of getting more than ${:,.0f}: {:,.1f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
 
 
     # set up graph window
-    fig1, (ax1, ax2) = plt.subplots(2,1,figsize=(16,9))
+    fig = plt.figure(figsize=(16,9))
+    gs = gridspec.GridSpec(2,2)
+    ax1 = fig.add_subplot(gs[0,0]) # row 0, column 0
 
-    # fig1, graph 1 -------------------------------------------------
+    # plot 1 (histogram) -------------------------------------------------
     ax1.title.set_text("Starting with ${:,.0f} over {} years with payments of {:,.0f}".format(PV, t, PMT))
     ax1.text(percentiles[50]-0.05*percentiles[50], 3, "50%:\n{:,}".format(int(percentiles[50])))
     ax1.axvline(x=percentiles[50], color='k')  # plot median line
     ax1.text(percentiles[5]-0.05*percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])))
     ax1.axvline(x=percentiles[5], color='k')  # plot 5th percentile line
 
-    trimbins = trim_bins(bins)
-    plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])
-    counts1, bins1, patches1 = ax1.hist(res_arr, plt_bins)
-
-    # colour the bars
-    num_bins = len(plt_bins)
+    trimbins = trim_bins(bins)  # remove extraneous bins from both ends
+    plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])  # array of left endpoints + final right endpoint
+    counts1, bins1, patches1 = ax1.hist(res_arr)
+   
+    # counts1, bins1, patches1 = ax1.hist(res_arr, plt_bins)
+    # # colour the bars
+    # num_bins = len(plt_bins)
     num_patches = len(patches1)
     for patch, i in zip(patches1, range(1, num_patches+1)):
-        sig = 0.9/(1+np.exp(-(i-num_bins)))
         patch.set_facecolor( (0.3, 0.8*(i/num_patches), 0.8*(i/num_patches)) ) # (r,g,b)
 
     ax1.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
 
-    # fig1, graph 2 -------------------------------------------------
-    num_bins = 25
-    step = (plt_bins[-1]-plt_bins[0])/num_bins
+    # plot 2 (percentiles) -------------------------------------------------
+    ax2 = fig.add_subplot(gs[1, :]) # row 0, column 0
 
-    counts2, bins2, patches2 = ax2.hist(res_arr, \
-        bins=num_bins, cumulative=-1, density=True)
+    num_bins = 25
+    # step = (plt_bins[-1]-plt_bins[0])/num_bins
+
+    counts2, bins2, patches2 = ax2.hist(res_arr, bins=num_bins, cumulative=-1, density=True)
 
     ax2.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     # if max(res_arr) > 100000:
@@ -120,7 +126,6 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     # colour the bars
     num_patches = len(patches2)
     for patch, i in zip(patches2, range(1, num_patches+1)):
-        sig = 0.9/(1+np.exp(-(i-num_bins)))
         patch.set_facecolor( (0.3, 0.8*(i/num_patches), 0.8*(i/num_patches)) ) # (r,g,b)
 
     # Label the percentiles above each bin
@@ -130,7 +135,8 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         ax2.annotate(percent, xy=(x, 0), xytext=(x+bins2[0]*0.01,counts2[i]))
 
 
-    # fig2 (timeseries of worst, median, best runs) -----------------
+    # plot 3 (timeseries of worst, median, best runs) -----------------
+    ax3 = fig.add_subplot(gs[0,1]) # row 1 (second), span all columns
 
     # find worst, median, best simulations
     ind_worst = np.argmin(res_arr)
@@ -140,8 +146,12 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     inds = [ind_worst, ind_med, ind_best]
 
     # plot timeseries
-    fig2, ax3 = plt.subplots()
     ax3.plot(rand_arr[inds].T)
+    # annotate
+    for i in range(len(inds)):
+        fv = res_arr[inds[i]]
+        cagr = ror_with_pmts(fv, PV, PMT, t, peryear=12)
+        ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n, fv), xytext=(n, fv))
 
     # return---------------------------------------------------------
     plt.plot()
@@ -153,20 +163,20 @@ if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=4)
 
     ### Deposit stage ### 
-    # PV = 30000
-    # PMT = 3000
-    # years = 12
-    # ROR = 7-1.8
-    # sd = 11.4
-    # bins = simulate(PV, PMT, years, ROR, sd)
-
-    ### Daily habit
-    PV = 0
-    PMT = 2.30*21
-    years = 20
+    PV = 30000
+    PMT = 3000
+    years = 12
     ROR = 7-1.8
     sd = 11.4
-    bins = simulate(PV, PMT, years, ROR, sd)
+    bins = simulate(PV, PMT, years, ROR, sd, N=10000)
+
+    ### Daily habit
+    # PV = 0
+    # PMT = 2.30*21
+    # years = 10
+    # ROR = 6-1.8
+    # sd = 11.
+    # bins = simulate(PV, PMT, years, ROR, sd)
 
     ### Withdraw stage ###
     # PMT = -3500
@@ -178,4 +188,4 @@ if __name__ == "__main__":
     plt.show()
     
 
-    # TODO: annotate fig2 to include CAGR beside each timeseries (use ror_with_pmts)
+    # TODO: annotate timeseries to include CAGR beside each timeseries (use ror_with_pmts)
