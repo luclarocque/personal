@@ -8,9 +8,9 @@ pandacnv.register()
 from finlib import date_back
 
 # tickers = ['XUU.TO', 'XEF.TO', 'XEC.TO', 'HXT.TO']
-tickers = ['HXT.TO','VCN.TO']
-num_years_back = 0
-num_months_back = 6
+tickers = ['VAB.TO','ZAG.TO']
+num_years_back = 3
+num_months_back = 0
 
 '''
 plot_stocks generates a plot of the growth of stocks specified

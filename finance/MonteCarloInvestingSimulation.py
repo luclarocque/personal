@@ -44,6 +44,9 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     pp = pprint.PrettyPrinter(indent=4)
     n = t*peryear
 
+    # percentiles to be displayed
+    show_percentiles = [1,10,25,50,75,90,99]
+
     inc = 50000  # increment (step size) and bin width
     lb = int(-1e6)  # lower bound of bins
     ub = int(1e8)  # upper bound of bins
@@ -63,7 +66,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         bins[res_bin][1] += 1  # increase count for the appropriate bin
 
     res_arr = np.array(res_arr)
-    percentiles = np.percentile(res_arr, range(101))  # create array of percentiles to pull from
+    percentiles = np.percentile(res_arr, range(101), interpolation='lower')  # create array of percentiles to pull from
     # Print summary
     print("Based on {} simulations of {} years".format(N, t))
     print("PV:", PV, ",", "Payments:", PMT)
@@ -74,7 +77,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         print("PMT changed to", PMT+100)
         PMT += 100
         return simulate(PV, PMT, peryear, t, r, sd, N)
-    for p in [0,1,5,10,50,75,90]:
+    for p in show_percentiles:
         print("{}% chance of ending with more than ${:,.0f}".format(100-p, int(percentiles[p])))
     print("---"*10)
     break_even = PV+PMT*n
@@ -135,15 +138,11 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         ax2.annotate(percent, xy=(x, 0), xytext=(x+bins2[0]*0.01,counts2[i]))
 
 
-    # plot 3 (timeseries of worst, median, best runs) -----------------
+    # plot 3 (timeseries) -----------------
     ax3 = fig.add_subplot(gs[0,1]) # row 1 (second), span all columns
 
-    # find worst, median, best simulations
-    ind_worst = np.argmin(res_arr)
-    med = median_elem(res_arr)
-    ind_med = np.where(np.isclose(res_arr, med))[0][0]
-    ind_best = np.argmax(res_arr)
-    inds = [ind_worst, ind_med, ind_best]
+    # find the timeseries representing certain percentiles
+    inds = [np.where(np.isclose(res_arr, percentiles[i]))[0][0] for i in show_percentiles]
 
     # plot timeseries
     ax3.plot(rand_arr[inds].T)
@@ -186,6 +185,3 @@ if __name__ == "__main__":
     # bins = simulate(PV, PMT, years, ROR, sd)
 
     plt.show()
-    
-
-    # TODO: annotate timeseries to include CAGR beside each timeseries (use ror_with_pmts)
