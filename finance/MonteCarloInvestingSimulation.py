@@ -7,26 +7,6 @@ from scipy.stats import percentileofscore
 import pprint
 from finlib import median_elem, create_rand_array, recession_adjustment, ror_with_pmts
 
-def trim_bins(oldbins):
-    '''
-    Removes leading and trailing bins with 0 occurrences from array oldbins.
-    oldbins is of the form: [[(k,k+49999),0] for k in range(0,9999999,50000)]
-    '''
-    bins = oldbins.copy()
-    empty = True
-    while empty:
-        if bins[0][1] == 0:
-            bins = bins[1:]
-        else:
-            empty = False
-    empty = True
-    while empty:
-        if bins[-1][1] == 0:
-            bins = bins[:-1]
-        if bins[-1][1] > 0:
-            empty = False
-    return bins
-
 
 def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     '''
@@ -70,13 +50,16 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     # Print summary
     print("Based on {} simulations of {} years".format(N, t))
     print("PV:", PV, ",", "Payments:", PMT)
+    # Warning for negative results
     if percentiles[0] < 0:
         print("*** Warning **********************")
         pct_low = len([i for i in res_arr if i < 0])/len(res_arr)*100
         print("{0:.2f}% of results are negative".format(pct_low))
-        print("PMT changed to", PMT+100)
-        PMT += 100
-        return simulate(PV, PMT, peryear, t, r, sd, N)
+        # Redo with different PMT if dipping too low: require <1% of results to be negative
+        if percentiles[1] < 0:
+            print("PMT changed to", PMT+100)
+            PMT += 100
+            return simulate(PV, PMT, t, r, sd, N=N, peryear=peryear)
     for p in show_percentiles:
         print("{}% chance of ending with more than ${:,.0f}".format(100-p, int(percentiles[p])))
     print("---"*10)
@@ -97,8 +80,8 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     ax1.text(percentiles[5]-0.05*percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])))
     ax1.axvline(x=percentiles[5], color='k')  # plot 5th percentile line
 
-    trimbins = trim_bins(bins)  # remove extraneous bins from both ends
-    plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])  # array of left endpoints + final right endpoint
+    # trimbins = trim_bins(bins)  # remove extraneous bins from both ends
+    # plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])  # array of left endpoints + final right endpoint
     counts1, bins1, patches1 = ax1.hist(res_arr)
    
     # counts1, bins1, patches1 = ax1.hist(res_arr, plt_bins)
@@ -145,16 +128,20 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     inds = [np.where(np.isclose(res_arr, percentiles[i]))[0][0] for i in show_percentiles]
 
     # plot timeseries
-    ax3.plot(rand_arr[inds].T)
+    timeseries = ax3.plot(rand_arr[inds].T)
     # annotate
     for i in range(len(inds)):
         fv = res_arr[inds[i]]
         cagr = ror_with_pmts(fv, PV, PMT, t, peryear=12)
         ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n, fv), xytext=(n, fv))
 
-    # return---------------------------------------------------------
+    # legend
+    labels = map(lambda x: str(100-x)+'%'+' chance', show_percentiles)
+    ax3.legend(timeseries, labels)
+
+
+    # final step---------------------------------------------------------
     plt.plot()
-    return trimbins
 
 
 
@@ -162,26 +149,27 @@ if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=4)
 
     ### Deposit stage ### 
-    PV = 30000
-    PMT = 3000
-    years = 12
-    ROR = 7-1.8
-    sd = 11.4
-    bins = simulate(PV, PMT, years, ROR, sd, N=10000)
+    # PV = 30000
+    # PMT = 3000
+    # years = 12
+    # ROR = 7-1.8
+    # sd = 11.4
+    # simulate(PV, PMT, years, ROR, sd, N=2000)
 
     ### Daily habit
     # PV = 0
     # PMT = 2.30*21
     # years = 10
     # ROR = 6-1.8
-    # sd = 11.
-    # bins = simulate(PV, PMT, years, ROR, sd)
+    # sd = 11.4
+    # simulate(PV, PMT, years, ROR, sd)
 
     ### Withdraw stage ###
-    # PMT = -3500
-    # years = 25
-    # ROR = 7
-    # sd = 11.4
-    # bins = simulate(PV, PMT, years, ROR, sd)
+    PV = 800000
+    PMT = -2800
+    years = 30
+    ROR = 7-1.8
+    sd = 11.4
+    simulate(PV, PMT, years, ROR, sd)
 
     plt.show()
