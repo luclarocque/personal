@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 from scipy.stats import percentileofscore
-import pprint
-from finlib import median_elem, create_rand_array, recession_adjustment, ror_with_pmts
+from finlib import create_rand_array, recession_adjustment, ror_with_pmts
 
 
 def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
@@ -21,7 +20,6 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     N: number of simulations
     peryear: number of times deposits/withdrawals are made per year
     '''
-    pp = pprint.PrettyPrinter(indent=4)
     n = t*peryear
 
     # percentiles to be displayed
@@ -64,7 +62,8 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         print("{}% chance of ending with more than ${:,.0f}".format(100-p, int(percentiles[p])))
     print("---"*10)
     break_even = PV+PMT*n
-    print("Probability of breaking even with more than ${:,.0f}: {:,.1f}%".format(break_even, 100-percentileofscore(res_arr, break_even)))
+    if PMT > 0:
+        print("Probability of breaking even with more than ${:,.0f}: {:,.1f}%".format(break_even, 100-percentileofscore(res_arr, break_even)))
     print("Probability of getting more than ${:,.0f}: {:,.1f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
 
 

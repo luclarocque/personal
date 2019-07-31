@@ -6,15 +6,6 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def median_elem(arr):
-    '''
-    Returns the median if arr has odd length, or
-    the smaller of the two middle elems if arr has even length.
-    The output is a number that is necessarily an elem of arr.
-    '''
-    return np.median(arr) if len(arr) % 2 == 1 else np.median(np.concatenate([[-np.inf], arr]))
-
-
 def create_rand_array(r, sd, t, N, peryear=12):
     '''
     Creates an array of size (N, years*peryear) of N simulated runs.
