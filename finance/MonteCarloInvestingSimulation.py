@@ -145,8 +145,6 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
 
 if __name__ == "__main__":
-    pp = pprint.PrettyPrinter(indent=4)
-
     ### Deposit stage ### 
     # PV = 30000
     # PMT = 3000
