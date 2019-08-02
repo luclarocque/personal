@@ -5,6 +5,9 @@ import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 from scipy.stats import percentileofscore
 from finlib import create_rand_array, recession_adjustment, ror_with_pmts
+import os
+THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+out_filename = os.path.join(THIS_FOLDER, 'plot.png')
 
 
 def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
@@ -62,8 +65,9 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         print("{}% chance of ending with more than ${:,.0f}".format(100-p, int(percentiles[p])))
     print("---"*10)
     break_even = PV+PMT*n
-    if PMT > 0:
-        print("Probability of breaking even with more than ${:,.0f}: {:,.1f}%".format(break_even, 100-percentileofscore(res_arr, break_even)))
+    if PMT < 0:
+        break_even = PV
+    print("Probability of breaking even with more than ${:,.0f}: {:,.1f}%".format(break_even, 100-percentileofscore(res_arr, break_even)))
     print("Probability of getting more than ${:,.0f}: {:,.1f}%".format(1e6, 100-percentileofscore(res_arr, 1e6)))
 
 
@@ -74,9 +78,9 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # plot 1 (histogram) -------------------------------------------------
     ax1.title.set_text("Starting with ${:,.0f} over {} years with payments of {:,.0f}".format(PV, t, PMT))
-    ax1.text(percentiles[50]-0.05*percentiles[50], 3, "50%:\n{:,}".format(int(percentiles[50])))
+    ax1.text(percentiles[50], 3, "50%:\n{:,}".format(int(percentiles[50])), color='w')
     ax1.axvline(x=percentiles[50], color='k')  # plot median line
-    ax1.text(percentiles[5]-0.05*percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])))
+    ax1.text(percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])), color='w')
     ax1.axvline(x=percentiles[5], color='k')  # plot 5th percentile line
 
     # trimbins = trim_bins(bins)  # remove extraneous bins from both ends
@@ -141,17 +145,24 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # final step---------------------------------------------------------
     plt.plot()
-
+    plt.savefig(out_filename)
 
 
 if __name__ == "__main__":
     ### Deposit stage ### 
-    # PV = 30000
-    # PMT = 3000
-    # years = 12
-    # ROR = 7-1.8
+    PV = 30000
+    PMT = 3000
+    years = 12
+    ROR = 7-1.8
+    sd = 11.4
+    simulate(PV, PMT, years, ROR, sd, N=2000)
+
+    # PV = 1
+    # PMT = 1
+    # years = 1
+    # ROR = 1
     # sd = 11.4
-    # simulate(PV, PMT, years, ROR, sd, N=2000)
+    # simulate(PV, PMT, years, ROR, sd)
 
     ### Daily habit
     # PV = 0
@@ -162,11 +173,11 @@ if __name__ == "__main__":
     # simulate(PV, PMT, years, ROR, sd)
 
     ### Withdraw stage ###
-    PV = 800000
-    PMT = -2800
-    years = 30
-    ROR = 7-1.8
-    sd = 11.4
-    simulate(PV, PMT, years, ROR, sd)
+    # PV = 800000
+    # PMT = -2800
+    # years = 30
+    # ROR = 7-1.8
+    # sd = 11.4
+    # simulate(PV, PMT, years, ROR, sd)
 
     plt.show()
