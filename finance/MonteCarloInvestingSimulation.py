@@ -75,42 +75,48 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     # set up graph window
     fig = plt.figure(figsize=(16,9))
     gs = gridspec.GridSpec(2,2)
-    ax1 = fig.add_subplot(gs[0,0]) # row 0, column 0
+
 
     # plot 1 (histogram) -------------------------------------------------
-    ax1.title.set_text("Starting with ${:,.0f} over {} years with payments of {:,.0f}".format(PV, t, PMT))
+    ax1 = fig.add_subplot(gs[0,0]) # row 0, column 0
+
+    # plot histogram
+    counts1, bins1, patches1 = ax1.hist(res_arr)
+
+    # add vertical line indicating the median 
     ax1.text(percentiles[50], 3, "50%:\n{:,}".format(int(percentiles[50])), color='w')
     ax1.axvline(x=percentiles[50], color='k')  # plot median line
-    ax1.text(percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])), color='w')
-    ax1.axvline(x=percentiles[5], color='k')  # plot 5th percentile line
+    # ax1.text(percentiles[5], 3, "5%:\n{:,}".format(int(percentiles[5])), color='w')
+    # ax1.axvline(x=percentiles[5], color='k')  # plot 5th percentile line
 
-    # trimbins = trim_bins(bins)  # remove extraneous bins from both ends
-    # plt_bins = np.array([b[0][0] for b in trimbins] + [trimbins[-1][0][1]])  # array of left endpoints + final right endpoint
-    counts1, bins1, patches1 = ax1.hist(res_arr)
-   
-    # counts1, bins1, patches1 = ax1.hist(res_arr, plt_bins)
-    # # colour the bars
-    # num_bins = len(plt_bins)
+    # formatting
+    ax1.title.set_text(
+    "Starting with ${:,.0f} with {}% interest over {} years and payments of {:,.0f}".format(PV, r, t, PMT))
+    ax1.xaxis.set_label_text("Total market value")
+    ax1.yaxis.set_label_text("Number of simulations")
+    ax1.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+
+    # colour the bars
     num_patches = len(patches1)
     for patch, i in zip(patches1, range(1, num_patches+1)):
         patch.set_facecolor( (0.3, 0.8*(i/num_patches), 0.8*(i/num_patches)) ) # (r,g,b)
 
-    ax1.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 
 
     # plot 2 (percentiles) -------------------------------------------------
     ax2 = fig.add_subplot(gs[1, :]) # row 0, column 0
+    num_bins = 24
 
-    num_bins = 25
-    # step = (plt_bins[-1]-plt_bins[0])/num_bins
-
+    # plot histogram
     counts2, bins2, patches2 = ax2.hist(res_arr, bins=num_bins, cumulative=-1, density=True)
 
+    # formatting
+    ax2.title.set_text("(Reverse) Cumulative probability of results")
+    ax2.xaxis.set_label_text("total market value")
+    ax2.yaxis.set_label_text("Probability of ending up with AT LEAST...")
     ax2.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
-    # if max(res_arr) > 100000:
-    #     plt.xticks(np.arange((min(res_arr)//100000)*100000, (max(res_arr)//100000)*100000, percentiles[98]//500000*50000))
-
-    plt.yticks([i for i in np.arange(0,1.1,0.1)])
+    plt.yticks([i for i in np.arange(0,1.1,0.1)],
+               [str(i)+'%' for i in np.arange(0,110,10)])
     plt.grid(axis='y')
 
     # colour the bars
@@ -125,7 +131,8 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
         ax2.annotate(percent, xy=(x, 0), xytext=(x+bins2[0]*0.01,counts2[i]))
 
 
-    # plot 3 (timeseries) -----------------
+
+    # plot 3 (timeseries) --------------------------------------------------
     ax3 = fig.add_subplot(gs[0,1]) # row 1 (second), span all columns
 
     # find the timeseries representing certain percentiles
@@ -133,7 +140,12 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # plot timeseries
     timeseries = ax3.plot(rand_arr[inds].T)
-    # annotate
+
+    # formatting
+    ax3.title.set_text("Timeseries | Percentages show the chance of getting AT LEAST...")
+    ax3.xaxis.set_label_text("month")
+    ax3.yaxis.set_label_text("total market value")
+    ax3.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
     for i in range(len(inds)):
         fv = res_arr[inds[i]]
         cagr = ror_with_pmts(fv, PV, PMT, t, peryear=12)
@@ -146,7 +158,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # final step---------------------------------------------------------
     plt.plot()
-    plt.savefig(out_filename)
+    # plt.savefig(out_filename)
 
 
 if __name__ == "__main__":
