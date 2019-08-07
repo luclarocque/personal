@@ -26,7 +26,8 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     n = t*peryear
 
     # percentiles to be displayed
-    show_percentiles = [1,10,25,50,75,90,99]
+    show_percentiles = [10,25,50,75,90]
+    show_percentiles.reverse()  # to display in proper order in legend of ax3
 
     inc = 50000  # increment (step size) and bin width
     lb = int(-1e6)  # lower bound of bins
@@ -181,3 +182,6 @@ if __name__ == "__main__":
     # simulate(PV, PMT, years, ROR, sd)
 
     plt.show()
+
+# TODO: label plots better (axis labels, titles explaining general idea)
+# TODO: reverse order of legend
