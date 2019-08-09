@@ -3,11 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
+from matplotlib.ticker import AutoMinorLocator
 from scipy.stats import percentileofscore
 from finlib import create_rand_array, recession_adjustment, ror_with_pmts
 import os
 THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-out_filename = os.path.join(THIS_FOLDER, 'plot.png')
+fileid = np.random.randint(1e9, 9e9, dtype='int64')
+plot_fname = 'plot{}.png'.format(fileid)
+out_filename = os.path.join(THIS_FOLDER, 'assets/images/' + plot_fname)
 
 
 def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
@@ -91,10 +94,11 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # formatting
     ax1.title.set_text(
-    "Starting with ${:,.0f} with {}% interest over {} years and payments of {:,.0f}".format(PV, r, t, PMT))
-    ax1.xaxis.set_label_text("Total market value")
-    ax1.yaxis.set_label_text("Number of simulations")
+    "Starting with \${:,.0f} with {:,.1f}% interest over {} years and payments of \${:,.0f}".format(PV, r, t, PMT))
+    ax1.xaxis.set_label_text("Total Market Value")
+    ax1.yaxis.set_label_text("Number of Simulations (out of {})".format(N))
     ax1.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax1.xaxis.set_minor_locator(AutoMinorLocator())
 
     # colour the bars
     num_patches = len(patches1)
@@ -104,17 +108,18 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
 
     # plot 2 (percentiles) -------------------------------------------------
-    ax2 = fig.add_subplot(gs[1, :]) # row 0, column 0
+    ax2 = fig.add_subplot(gs[1, :]) # row 1 (second), span all columns
     num_bins = 24
 
     # plot histogram
     counts2, bins2, patches2 = ax2.hist(res_arr, bins=num_bins, cumulative=-1, density=True)
 
     # formatting
-    ax2.title.set_text("(Reverse) Cumulative probability of results")
-    ax2.xaxis.set_label_text("total market value")
-    ax2.yaxis.set_label_text("Probability of ending up with AT LEAST...")
+    ax2.title.set_text("(Reverse) Cumulative Probability of Results")
+    ax2.xaxis.set_label_text("Total Market Value")
+    ax2.yaxis.set_label_text("Probability of Getting AT LEAST...")
     ax2.xaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    ax2.xaxis.set_minor_locator(AutoMinorLocator())
     plt.yticks([i for i in np.arange(0,1.1,0.1)],
                [str(i)+'%' for i in np.arange(0,110,10)])
     plt.grid(axis='y')
@@ -133,7 +138,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
 
     # plot 3 (timeseries) --------------------------------------------------
-    ax3 = fig.add_subplot(gs[0,1]) # row 1 (second), span all columns
+    ax3 = fig.add_subplot(gs[0,1]) # row 0, column 1
 
     # find the timeseries representing certain percentiles
     inds = [np.where(np.isclose(res_arr, percentiles[i]))[0][0] for i in show_percentiles]
@@ -143,13 +148,15 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
 
     # formatting
     ax3.title.set_text("Timeseries | Percentages show the chance of getting AT LEAST...")
-    ax3.xaxis.set_label_text("month")
-    ax3.yaxis.set_label_text("total market value")
+    ax3.xaxis.set_label_text("Month")
+    ax3.yaxis.set_label_text("Total Market Value")
     ax3.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
+    xticks, _ = plt.xticks()  # array of xtick locations (values on axis)
+    tick_diff = xticks[1]-xticks[0]
     for i in range(len(inds)):
         fv = res_arr[inds[i]]
         cagr = ror_with_pmts(fv, PV, PMT, t, peryear=12)
-        ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n, fv), xytext=(n, fv))
+        ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n+tick_diff/5, fv), xytext=(n+tick_diff/5, fv))
 
     # legend
     labels = map(lambda x: str(100-x)+'%'+' chance', show_percentiles)
@@ -159,23 +166,17 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12):
     # final step---------------------------------------------------------
     plt.plot()
     # plt.savefig(out_filename)
+    # return ( "${:,.2f}".format(percentiles[50]), plot_fname )
 
 
 if __name__ == "__main__":
-    ### Deposit stage ### 
+    ### Deposit stage ###
     PV = 30000
-    PMT = 3000
+    PMT = 2400
     years = 12
     ROR = 7-1.8
     sd = 11.4
     simulate(PV, PMT, years, ROR, sd, N=2000)
-
-    # PV = 1
-    # PMT = 1
-    # years = 1
-    # ROR = 1
-    # sd = 11.4
-    # simulate(PV, PMT, years, ROR, sd)
 
     ### Daily habit
     # PV = 0
@@ -194,6 +195,3 @@ if __name__ == "__main__":
     # simulate(PV, PMT, years, ROR, sd)
 
     plt.show()
-
-# TODO: label plots better (axis labels, titles explaining general idea)
-# TODO: reverse order of legend
