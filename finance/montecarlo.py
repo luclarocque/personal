@@ -102,9 +102,9 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12, show_percentiles=[0,5,25,50,
     tot_counts1 = sum(counts1)
     for patch, i in zip(patches1, range(0, num_patches)):
         patch.set_facecolor((
-            max(1-2*counts1[i]/tot_counts1, 0),
-            max(1-3*np.sqrt(counts1[i]/tot_counts1), 0), 
-            min(2*np.sqrt(counts1[i]/tot_counts1), 1)))
+            max(1-2.2*counts1[i]/tot_counts1, 0),
+            min(1.2*np.sqrt(counts1[i]/tot_counts1), 1), 
+            min(1.1*np.sqrt(counts1[i]/tot_counts1), 1)))
 
 
     # plot 2 (percentiles) -------------------------------------------------
@@ -134,6 +134,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12, show_percentiles=[0,5,25,50,
             max(1-3*np.sqrt(counts2[i]/tot_counts2), 0), 
             max(1-2*np.sqrt(counts2[i]/tot_counts2), 0)))
 
+
     # Label the percentiles above each bin
     for i, x in zip(range(num_bins), bins2[:-1]):
         percent = '{:.0f}%'.format(counts2[i]*100)
@@ -154,7 +155,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12, show_percentiles=[0,5,25,50,
     timeseries = ax3.plot(rand_arr[inds].T)
 
     # formatting
-    ax3.title.set_text("Timeseries | Percentages show the chance of getting AT LEAST...")
+    ax3.title.set_text("Timeseries of Specified Percentiles")
     ax3.xaxis.set_label_text("Month")
     ax3.yaxis.set_label_text("Total Market Value")
     ax3.yaxis.set_major_formatter(
@@ -164,7 +165,7 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12, show_percentiles=[0,5,25,50,
     for i in range(len(inds)):
         fv = res_arr[inds[i]]
         cagr = ror_with_pmts(fv, PV, PMT, t, peryear=12)
-        ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n+tick_diff/5, fv), xytext=(n+tick_diff/5, fv))
+        ax3.annotate("${:,.0f} | CAGR {:.1f}%".format(fv, cagr*100), xy=(n+tick_diff/8, fv), xytext=(n+tick_diff/8, fv))
 
     # legend
     labels = map(lambda x: '$'+str(x)+'^{th}$'+' percentile', show_percentiles)
@@ -179,12 +180,12 @@ def simulate(PV, PMT, t, r, sd, N=1000, peryear=12, show_percentiles=[0,5,25,50,
 
 if __name__ == "__main__":
     ### Deposit stage ###
-    PV = 30000
-    PMT = 2400
-    years = 12
-    ROR = 4.9
+    PV = 0
+    PMT = 2000
+    years = 4
+    ROR = 6.4
     sd = 10.6
-    simulate(PV, PMT, years, ROR, sd, N=5000)
+    simulate(PV, PMT, years, ROR, sd, N=2000)
 
     ### Daily habit
     # PV = 0
